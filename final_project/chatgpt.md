@@ -75,8 +75,6 @@ public_users.get('/review/:isbn',function (req, res) {
 
 module.exports.general = public_users;
 
-
-
 ```
 
 booksdb.js:
@@ -176,7 +174,7 @@ app.use("/customer",session({secret:"fingerprint_customer",resave: true, saveUni
 
 app.use("/customer/auth/*", function auth(req,res,next){
 // Check if user is logged in and has valid access token
-    if (req.session.authotization) {
+    if (req.session.authorization) {
         let token = req.session.authorization['accessToken'];
 
         // Verify the JWT token
@@ -199,7 +197,6 @@ app.use("/customer", customer_routes);
 app.use("/", genl_routes);
 
 app.listen(PORT,()=>console.log("Server is running"));
-
 ```
 
 auth_users.js:
@@ -211,13 +208,19 @@ const regd_users = express.Router();
 
 let users = [];
 
-const isValid = (username)=>{ //returns boolean
-//write code to check is the username is valid
-}
+const isValid = (username) => {
+  const existingUser = users.find((user) => user.username === username);
+  // If no user is found, username is valid (i.e., not taken)
+  return !existingUser;
+};
 
-const authenticatedUser = (username,password)=>{ //returns boolean
-//write code to check if username and password match the one we have in records.
-}
+const authenticatedUser = (username, password) => {
+  const validUser = users.find(
+    (user) => user.username === username && user.password === password
+  );
+  // Return true if we found a matching user, otherwise false
+  return !!validUser;
+};
 
 regd_users.post("/login", (req, res) => {
   const { username, password } = req.body;
@@ -236,51 +239,40 @@ regd_users.post("/login", (req, res) => {
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  const isbn = req.params.isbn;
+
+  const reviewText = req.query.review;
+  if (!reviewText) {
+    return res.status(400).json({ message: "Review text is required."});
+  }
+
+  const book = books[isbn];
+  if (!book) {
+    return res.status(404).json({message: `Book with ISBN ${isbn} not found.`});
+  }
+
+  book.reviews[username] = reviewText;
+
+  return res.status(300).json({
+    message: "Review added/modified successfully",
+    reviews: book.reviews
+  });
 });
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
 module.exports.users = users;
-
-
 ```
 
-Task 7:
-Complete the code for logging in as a registered user.
-Hint: The code must validate and sign in a customer based on the username and password created in Exercise 6. It must also save the user credentials for the session as a JWT.
-As you are required to login as a customer, while testing the output on Postman, use the endpoint as "customer/login"
+Task 8:
+Complete the code for adding or modifying a book review.
+Hint: You have to give a review as a request query & it must get posted with the username (stored in the session) posted. If the same user posts a different review on the same ISBN, it should modify the existing review. If another user logs in and posts a review on the same ISBN, it will get added as a different review under the same ISBN.
 
 Test the output on Postman.
 
-I am getting the following error when trying npm start:
-
-artajover@MBPM final_project % npm start
-
-> bookshop@1.0.1 start
-> nodemon index.js
-
-[nodemon] 2.0.22
-[nodemon] to restart at any time, enter `rs`
-[nodemon] watching path(s): *.*
-[nodemon] watching extensions: js,mjs,json
-[nodemon] starting `node index.js`
-/Users/martajover/Documents/Educación/Fullstack coursera/FS_Ejercicios/NODE JS/expressBookReviews/final_project/router/general.js:21
-regd_users.post("/login", (req, res) => {
-^
-
-ReferenceError: regd_users is not defined
-    at Object.<anonymous> (/Users/martajover/Documents/Educación/Fullstack coursera/FS_Ejercicios/NODE JS/expressBookReviews/final_project/router/general.js:21:1)
-    at Module._compile (node:internal/modules/cjs/loader:1554:14)
-    at Object..js (node:internal/modules/cjs/loader:1706:10)
-    at Module.load (node:internal/modules/cjs/loader:1289:32)
-    at Function._load (node:internal/modules/cjs/loader:1108:12)
-    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
-    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
-    at Module.require (node:internal/modules/cjs/loader:1311:12)
-    at require (node:internal/modules/helpers:136:16)
-    at Object.<anonymous> (/Users/martajover/Documents/Educación/Fullstack coursera/FS_Ejercicios/NODE JS/expressBookReviews/final_project/index.js:5:21)
-
-Node.js v22.14.0
-[nodemon] app crashed - waiting for file changes before starting...
+1. POST http://localhost:5001/register
+    Body:
+    {
+    "username": "marta",
+    "password": "mypassword123"
+    }
