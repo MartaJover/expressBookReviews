@@ -310,6 +310,5 @@ module.exports.users = users;
 
 Task 10:
 Add the code for getting the list of books available in the shop (done in Task 1) using Promise callbacks or async-await with Axios.
-Hint: Refer to this lab on Promises and Callbacks.
 
 Please ensure that the general.js file has the code for getting the list of books available in the shop using Promise callbacks or async-await with Axios is covered.
