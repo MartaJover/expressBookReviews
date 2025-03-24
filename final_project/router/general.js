@@ -26,6 +26,19 @@ public_users.get('/books',function (req, res) {
   return res.status(200).send(booksList);
 });
 
+// Get the list of books available in the shop using async/await with Axios
+public_users.get('/books-async', async (req, res) => {
+  try {
+    const axios = require('axios');
+    // Call the existing '/books' endpoint on your server
+    const response = await axios.get('http://localhost:5001/books');
+    // Return the data received from the '/books' endpoint
+    return res.status(200).json(response.data);
+  } catch (error) {
+    return res.status(500).json({ message: "Error retrieving books", error: error.message });
+  }
+});
+
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn',function (req, res) {
   const isbn = req.params.isbn;

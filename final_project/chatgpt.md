@@ -28,6 +28,19 @@ public_users.get('/books',function (req, res) {
   return res.status(200).send(booksList);
 });
 
+// Get the list of books available in the shop using async/await with Axios
+public_users.get('/books-async', async (req, res) => {
+  try {
+    const axios = require('axios');
+    // Call the existing '/books' endpoint on your server
+    const response = await axios.get('http://localhost:5001/books');
+    // Return the data received from the '/books' endpoint
+    return res.status(200).json(response.data);
+  } catch (error) {
+    return res.status(500).json({ message: "Error retrieving books", error: error.message });
+  }
+});
+
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn',function (req, res) {
   const isbn = req.params.isbn;
@@ -74,7 +87,6 @@ public_users.get('/review/:isbn',function (req, res) {
 });
 
 module.exports.general = public_users;
-
 ```
 
 booksdb.js:
@@ -251,6 +263,11 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
     return res.status(404).json({message: `Book with ISBN ${isbn} not found.`});
   }
 
+  const username = req.user && req.user.username;
+  if (!username) {
+    return res.status(403).json({ message: "User not authenticated" });
+  }
+
   book.reviews[username] = reviewText;
 
   return res.status(300).json({
@@ -259,20 +276,40 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   });
 });
 
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+  const isbn = req.params.isbn;
+  const book = books[isbn];
+
+  if (!book) {
+    return res.status(404).json({ message: `Book with ISBN ${isbn} not found.` });
+  }
+
+  const username = req.user && req.user.username;
+  if (!username) {
+    return res.status(403).json({ message: "User not authenticated" });
+  }
+
+  if (!book.reviews[username]) {
+    return res
+      .status(404)
+      .json({ message: `No review found for user ${username} on this book.` });
+  }
+
+  delete book.reviews[username];
+
+  return res.status(200).json({
+    message: "Review deleted successfully",
+    reviews: book.reviews,
+  });
+});
+
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
 module.exports.users = users;
 ```
 
-Task 8:
-Complete the code for adding or modifying a book review.
-Hint: You have to give a review as a request query & it must get posted with the username (stored in the session) posted. If the same user posts a different review on the same ISBN, it should modify the existing review. If another user logs in and posts a review on the same ISBN, it will get added as a different review under the same ISBN.
+Task 10:
+Add the code for getting the list of books available in the shop (done in Task 1) using Promise callbacks or async-await with Axios.
+Hint: Refer to this lab on Promises and Callbacks.
 
-Test the output on Postman.
-
-1. POST http://localhost:5001/register
-    Body:
-    {
-    "username": "marta",
-    "password": "mypassword123"
-    }
+Please ensure that the general.js file has the code for getting the list of books available in the shop using Promise callbacks or async-await with Axios is covered.
