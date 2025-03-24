@@ -48,7 +48,6 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
     return res.status(404).json({message: `Book with ISBN ${isbn} not found.`});
   }
 
-  // Retrieve username from the JWT payload, which is attached to req.user in index.js
   const username = req.user && req.user.username;
   if (!username) {
     return res.status(403).json({ message: "User not authenticated" });
@@ -59,6 +58,33 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   return res.status(300).json({
     message: "Review added/modified successfully",
     reviews: book.reviews
+  });
+});
+
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+  const isbn = req.params.isbn;
+  const book = books[isbn];
+
+  if (!book) {
+    return res.status(404).json({ message: `Book with ISBN ${isbn} not found.` });
+  }
+
+  const username = req.user && req.user.username;
+  if (!username) {
+    return res.status(403).json({ message: "User not authenticated" });
+  }
+
+  if (!book.reviews[username]) {
+    return res
+      .status(404)
+      .json({ message: `No review found for user ${username} on this book.` });
+  }
+
+  delete book.reviews[username];
+
+  return res.status(200).json({
+    message: "Review deleted successfully",
+    reviews: book.reviews,
   });
 });
 
